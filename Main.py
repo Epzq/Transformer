@@ -43,12 +43,13 @@ vid_list_file_tst = "./"+args.dataset+"/splits/test.split1.bundle"
 
 gt_path = "./"+args.dataset+"/groundTruth/"
 
-arrays= "D:/Projects/asrf-main/result/"+args.dataset+"/dataset-"+args.dataset+"_split-1/predictions/"
+arrays= "./"+args.dataset+"/predictions/"
+
 
 train_pth = "./"+args.dataset+"/train"
 test_pth = "./"+args.dataset+"/test"
 
-mapping_file = "./"+args.dataset+"/test/mapping.txt"
+mapping_file = "./"+args.dataset+"/mapping.txt"
 
 file_ptr = open(mapping_file, 'r') 
 actions = file_ptr.read().split('\n')[:-1]
