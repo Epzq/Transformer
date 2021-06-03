@@ -130,6 +130,16 @@ test_30to20_loader = torch.utils.data.DataLoader(test_30to20_dataset,batch_size=
 test_30to30_loader = torch.utils.data.DataLoader(test_30to30_dataset,batch_size=batch,shuffle=True, collate_fn=collate_fn_padd)
 test_30to50_loader = torch.utils.data.DataLoader(test_30to50_dataset,batch_size=batch,shuffle=True, collate_fn=collate_fn_padd)
 
+acc_20to10_loader = torch.utils.data.DataLoader(test_20to10_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_20to20_loader = torch.utils.data.DataLoader(test_20to20_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_20to30_loader = torch.utils.data.DataLoader(test_20to30_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_20to50_loader = torch.utils.data.DataLoader(test_20to50_dataset,batch_size=1,shuffle=False, collate_fn=collate_fn_padd)
+
+acc_30to10_loader = torch.utils.data.DataLoader(test_30to10_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_30to20_loader = torch.utils.data.DataLoader(test_30to20_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_30to30_loader = torch.utils.data.DataLoader(test_30to30_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+acc_30to50_loader = torch.utils.data.DataLoader(test_30to50_dataset,batch_size=1,shuffle=True, collate_fn=collate_fn_padd)
+
 pred_20to10_loader = torch.utils.data.DataLoader(pred_20to10_dataset,batch_size=batch,shuffle=True, collate_fn=collate_fn_padd)
 pred_20to20_loader = torch.utils.data.DataLoader(pred_20to20_dataset,batch_size=batch,shuffle=True, collate_fn=collate_fn_padd)
 pred_20to30_loader = torch.utils.data.DataLoader(pred_20to30_dataset,batch_size=batch,shuffle=True, collate_fn=collate_fn_padd)
@@ -213,7 +223,7 @@ for epoch in range(N_EPOCHS):
     train_loss = train(model,train_20to50_loader, optimizer, criterion,duration_loss,sig,CLIP,device)
     #valid_loss = evaluate(model, test_20to50_loader, criterion,duration_loss,sig,device)
     #train_acc = accuracy(train_20to50_loader,model,device,sig)
-    epoch_acc = accuracy(test_20to50_loader,model,device,sig,SOS_index)
+    epoch_acc = accuracy(acc_20to50_loader,model,device,sig,SOS_index)
     print(epoch_acc)
     end_time = time.time()
     

@@ -15,7 +15,7 @@ class Encoder(nn.Module):
                  pf_dim,
                  dropout, 
                  device,
-                 max_length = 15):
+                 max_length = 20):
         super().__init__()
         
         self.device = device
@@ -211,7 +211,7 @@ class Decoder(nn.Module):
                  pf_dim, 
                  dropout, 
                  device,
-                 max_length = 50):
+                 max_length = 20):
         super().__init__()
         
         self.device = device

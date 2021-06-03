@@ -1,4 +1,9 @@
 import torch
+
+
+
+
+
 def train(model, iterator, optimizer, criterion,duration_loss,sig,clip, device):
     model.train()
     epoch_loss = 0
