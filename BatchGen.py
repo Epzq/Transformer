@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import pickle    
 
 class BatchGenerator(object):
     def __init__(self, actions_dict, gt_path,vid_list_file,vid_list_file_tst,array_dir,SOS_index,EOS_index):
@@ -10,7 +11,7 @@ class BatchGenerator(object):
         self.vid_list_file_tst= vid_list_file_tst
         self.arrays = array_dir
         self.SOS_index= SOS_index
-        self.EOS_index= EOS_index
+        self.EOS_index= 0
         
     def get_label_length_seq(self,content,count):
         label_seq = []
@@ -124,7 +125,8 @@ class BatchGenerator(object):
             in3020 = indexes[thirty:fifty]
             in3030 = indexes[thirty:sixty]
             in3050 = indexes[thirty:eighty]
-    
+        
+            
             a,b= self.get_label_length_seq(in20,total_frames)
             c,d= self.get_label_length_seq(in2010,total_frames)
             e,f= self.get_label_length_seq(in2020,total_frames)
@@ -136,6 +138,8 @@ class BatchGenerator(object):
             o,p= self.get_label_length_seq(in3020,total_frames)
             q,r= self.get_label_length_seq(in3030,total_frames)
             s,t= self.get_label_length_seq(in3050,total_frames)
+            
+         
     
             twt=[[x,y] for x,y in zip(a,b)]
             input20.append(torch.tensor(twt))
@@ -174,6 +178,7 @@ class BatchGenerator(object):
             trt50.insert(0,[self.SOS_index,0])
             trt50.append([self.EOS_index,0])
             tar3050.append(torch.tensor(trt50))
+            
             
         return input20,tar2010,tar2020,tar2030,tar2050,input30,tar3010,tar3020,tar3030,tar3050
         
@@ -390,6 +395,22 @@ class LabelsDataset(torch.utils.data.Dataset):
     
     def __len__(self):
         return len(self.data_input)
+
+def randcuts(dataset):
+    if dataset == "50Salads":
+        with open("list_of_examples.txt", "rb") as fp:   #Pickling
+            examps=pickle.load(fp)
+    if dataset == "breakfast" :  
+        with open("breakfast.txt", "rb") as fp:   #Pickling
+            examps=pickle.load(fp)
+    seqs=[]
+    tars=[]    
+    for item in examps:
+        seqs.append(torch.tensor(item[0]).float())
+        tars.append(torch.tensor(item[1]).float())
+    return seqs,tars
+
+
     
 
 

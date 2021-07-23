@@ -20,7 +20,6 @@ class Encoder(nn.Module):
         
         self.device = device
         self.input_dim = input_dim
-       #self.tok_embedding = nn.Embedding(input_dim, hid_dim-1)
         self.pos_embedding = nn.Embedding(max_length, hid_dim)
         
         self.layers = nn.ModuleList([EncoderLayer(hid_dim, 
@@ -49,11 +48,7 @@ class Encoder(nn.Module):
         action_duration = src[:,:,-1:]
         one_hotwlen=torch.cat((one_hot,action_duration),dim=2)
         embedding=self.linear(one_hotwlen) 
-        #tok_embedded = self.tok_embedding(src[:,:,:-1].squeeze(dim=-1).long())
-    
         
-    
-        #embeddingWlen = torch.cat((tok_embedded,action_duration),dim=2)
         src = self.dropout((embedding * self.scale) + self.pos_embedding(pos))
         
         #src = [batch size, src len, hid dim]
@@ -64,6 +59,42 @@ class Encoder(nn.Module):
         #src = [batch size, src len, hid dim]
             
         return src
+
+class LIN(nn.Module):
+    def __init__(self, 
+                 input_dim, 
+                 hid_dim, 
+                 n_layers, 
+                 n_heads, 
+                 pf_dim,
+                 dropout, 
+                 device,
+                 max_length = 20):
+        super().__init__()
+        
+        self.device = device
+        self.input_dim = input_dim
+        self.pos_embedding = nn.Embedding(max_length, hid_dim)
+
+        self.dropout = nn.Dropout(dropout)
+        self.linear=nn.Linear(input_dim+1,hid_dim)
+        
+        self.scale = torch.sqrt(torch.FloatTensor([hid_dim])).to(device)
+        
+    def forward(self, src, src_mask):
+        
+        #src = [batch size, src len]
+        #src_mask = [batch size, 1, 1, src len]
+        #pos = [batch size, src len]
+        one_hot= F.one_hot(src[:,:,:-1].squeeze(dim=-1).long(),num_classes=self.input_dim)
+        action_duration = src[:,:,-1:]
+        one_hotwlen=torch.cat((one_hot,action_duration),dim=2)
+        embedding=self.linear(one_hotwlen) 
+        
+        #src = [batch size, src len, hid dim
+        #src = [batch size, src len, hid dim]
+            
+        return embedding
 
 class EncoderLayer(nn.Module):
     def __init__(self, 
@@ -216,7 +247,6 @@ class Decoder(nn.Module):
         
         self.device = device
         self.output_dim=output_dim
-        #self.tok_embedding = nn.Embedding(output_dim, hid_dim-1)
         self.pos_embedding = nn.Embedding(max_length, hid_dim)
         self.linear=nn.Linear(output_dim+1,hid_dim)
         self.layers = nn.ModuleList([DecoderLayer(hid_dim, 
@@ -231,6 +261,7 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
         
         self.scale = torch.sqrt(torch.FloatTensor([hid_dim])).to(device)
+        self.sig= nn.Sigmoid()
         
         
     def forward(self, trg, enc_src, trg_mask, src_mask):
@@ -244,18 +275,12 @@ class Decoder(nn.Module):
         trg_len = trg.shape[1]
         
         pos = torch.arange(0, trg_len).unsqueeze(0).repeat(batch_size, 1).to(self.device)
-                            
         #pos = [batch size, trg len]
-    
-        #trg_embedded = self.tok_embedding(trg[:,:,:-1].squeeze(dim=-1).long())
-        #trgaction_duration = trg[:,:,-1:]
-        #trgembeddingWlen = torch.cat((trg_embedded,trgaction_duration),dim=2)
-        
-      
+
         trgone_hot= F.one_hot(trg[:,:,:-1].squeeze(dim=-1).long(),num_classes=self.output_dim)
         trgaction_duration = trg[:,:,-1:].float()
         trgone_hotwlen=torch.cat((trgone_hot,trgaction_duration),dim=2)
-        trgembedding=self.linear(trgone_hotwlen) 
+        trgembedding = self.linear(trgone_hotwlen) 
         trg = self.dropout((trgembedding * self.scale) + self.pos_embedding(pos))
         #trg = [batch size, trg len, hid dim]
         
@@ -264,13 +289,13 @@ class Decoder(nn.Module):
         
         #trg = [batch size, trg len, hid dim]
         #attention = [batch size, n heads, trg len, src len]
-        
         output = self.fc_out(trg)
         
-        length = self.fc_len(trg)
+        _length = self.fc_len(trg)
+        length = self.sig(_length)
         #output = [batch size, trg len, output dim]
             
-        return output,length, attention
+        return output,length,attention
 
 class DecoderLayer(nn.Module):
     def __init__(self, 
@@ -336,6 +361,7 @@ class Seq2Seq(nn.Module):
         super().__init__()
         
         self.encoder = encoder
+        
         self.decoder = decoder
         self.src_pad_idx = src_pad_idx
         self.trg_pad_idx = trg_pad_idx
@@ -354,6 +380,7 @@ class Seq2Seq(nn.Module):
     def make_trg_mask(self, trg):
         
         #trg = [batch size, trg len]
+        
         trg_pad_mask = (trg[:,:,:-1].squeeze(dim=-1) != self.trg_pad_idx).unsqueeze(1).unsqueeze(2)
         
         #trg_pad_mask = [batch size, 1, 1, trg len]
@@ -361,11 +388,11 @@ class Seq2Seq(nn.Module):
         trg_len = trg.shape[1]
         
         trg_sub_mask = torch.tril(torch.ones((trg_len, trg_len), device = self.device)).bool()
-        
+    
         #trg_sub_mask = [trg len, trg len]
             
         trg_mask = trg_pad_mask & trg_sub_mask
-
+        
         #trg_mask = [batch size, 1, trg len, trg len]
         
         return trg_mask
